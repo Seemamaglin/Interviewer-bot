@@ -41,11 +41,155 @@ const App = () => {
       
       // Add score and feedback to chat history if evaluation exists
       if (evaluation) {
-        const feedbackContent = `Score: ${evaluation.score}/10\n\n${evaluation.feedback}`
-        setChatHistory(prev => [
-          ...prev,
-          { role: 'bot', content: feedbackContent }
-        ])
+        // Check if this is a "don't know" response that needs explanation
+        if (evaluation.score === 0 && evaluation.feedback === "It's ok, I will explain you the concept clearly:") {
+          // Provide detailed explanation for "don't know" responses
+          let explanation = '';
+          switch (selectedSubject) {
+            case 'Python':
+              if (currentQuestion === "What is the difference between a list and a tuple in Python?") {
+                explanation = "In Python, both lists and tuples are used to store collections of items, but they have key differences:\n\n" +
+                  "1. Mutability: Lists are mutable (can be changed after creation), while tuples are immutable (cannot be changed after creation).\n" +
+                  "2. Syntax: Lists use square brackets [], while tuples use parentheses ().\n" +
+                  "3. Performance: Tuples are generally faster than lists for accessing elements.\n" +
+                  "4. Use cases: Lists are used for collections that may change over time, while tuples are used for fixed data like coordinates.\n" +
+                  "5. Dictionary keys: Tuples can be used as dictionary keys because they're immutable, but lists cannot.";
+              } else {
+                explanation = "I'd be happy to explain this concept to you. In a real implementation, I would provide a detailed explanation of the topic.";
+              }
+              break;
+            case 'SQL':
+              if (currentQuestion === "What is the difference between INNER JOIN and LEFT JOIN?") {
+                explanation = "In SQL, JOINs are used to combine rows from two or more tables based on a related column:\n\n" +
+                  "INNER JOIN:\n" +
+                  "- Returns only rows that have matching values in both tables\n" +
+                  "- If there's no match, the row is not included in the result set\n\n" +
+                  "LEFT JOIN (or LEFT OUTER JOIN):\n" +
+                  "- Returns all rows from the left table, and matching rows from the right table\n" +
+                  "- If there's no match in the right table, NULL values are returned for right table columns\n" +
+                  "- The left table is the first table mentioned in the query";
+              } else {
+                explanation = "I'd be happy to explain this concept to you. In a real implementation, I would provide a detailed explanation of the topic.";
+              }
+              break;
+            case 'Networking':
+              if (currentQuestion === "What is the difference between TCP and UDP?") {
+                explanation = "TCP (Transmission Control Protocol) and UDP (User Datagram Protocol) are both transport layer protocols, but they have important differences:\n\n" +
+                  "TCP:\n" +
+                  "- Connection-oriented (requires a connection to be established before data transfer)\n" +
+                  "- Reliable (guarantees delivery and order of packets)\n" +
+                  "- Slower due to error checking and acknowledgments\n" +
+                  "- Used for applications where accuracy is more important than speed (web browsing, email)\n\n" +
+                  "UDP:\n" +
+                  "- Connectionless (no connection establishment required)\n" +
+                  "- Unreliable (no guarantee of delivery or order)\n" +
+                  "- Faster with less overhead\n" +
+                  "- Used for applications where speed is more important than accuracy (streaming, gaming)";
+              } else {
+                explanation = "I'd be happy to explain this concept to you. In a real implementation, I would provide a detailed explanation of the topic.";
+              }
+              break;
+            case 'General HR':
+            case 'HR':
+              if (currentQuestion === "Tell me about yourself.") {
+                explanation = "This is a common opening question in interviews. A good approach is to structure your answer like this:\n\n" +
+                  "1. Brief introduction (name, current role/position)\n" +
+                  "2. Relevant educational background\n" +
+                  "3. Key professional experiences related to the job\n" +
+                  "4. Important skills and strengths\n" +
+                  "5. Personal interests (optional, only if relevant)\n\n" +
+                  "Keep it concise (1-2 minutes), focus on professional aspects, and tailor it to the position you're applying for.";
+              } else {
+                explanation = "I'd be happy to explain how to approach this question. In a real implementation, I would provide specific guidance.";
+              }
+              break;
+            default:
+              explanation = "I'd be happy to explain this concept to you. In a real implementation, I would provide a detailed explanation.";
+          }
+          
+          const feedbackContent = `${evaluation.feedback}\n\n${explanation}`;
+          setChatHistory(prev => [
+            ...prev,
+            { role: 'bot', content: feedbackContent }
+          ]);
+        } else if (evaluation.score > 0 && evaluation.feedback.includes("Here's the complete explanation:")) {
+          // Provide detailed explanation for short/incomplete answers
+          let explanation = '';
+          switch (selectedSubject) {
+            case 'Python':
+              if (currentQuestion === "What is the difference between a list and a tuple in Python?") {
+                explanation = "In Python, both lists and tuples are used to store collections of items, but they have key differences:\n\n" +
+                  "1. Mutability: Lists are mutable (can be changed after creation), while tuples are immutable (cannot be changed after creation).\n" +
+                  "2. Syntax: Lists use square brackets [], while tuples use parentheses ().\n" +
+                  "3. Performance: Tuples are generally faster than lists for accessing elements.\n" +
+                  "4. Use cases: Lists are used for collections that may change over time, while tuples are used for fixed data like coordinates.\n" +
+                  "5. Dictionary keys: Tuples can be used as dictionary keys because they're immutable, but lists cannot.";
+              } else {
+                explanation = "Here's a more detailed explanation of the topic.";
+              }
+              break;
+            case 'SQL':
+              if (currentQuestion === "What is the difference between INNER JOIN and LEFT JOIN?") {
+                explanation = "In SQL, JOINs are used to combine rows from two or more tables based on a related column:\n\n" +
+                  "INNER JOIN:\n" +
+                  "- Returns only rows that have matching values in both tables\n" +
+                  "- If there's no match, the row is not included in the result set\n\n" +
+                  "LEFT JOIN (or LEFT OUTER JOIN):\n" +
+                  "- Returns all rows from the left table, and matching rows from the right table\n" +
+                  "- If there's no match in the right table, NULL values are returned for right table columns\n" +
+                  "- The left table is the first table mentioned in the query";
+              } else {
+                explanation = "Here's a more detailed explanation of the topic.";
+              }
+              break;
+            case 'Networking':
+              if (currentQuestion === "What is the difference between TCP and UDP?") {
+                explanation = "TCP (Transmission Control Protocol) and UDP (User Datagram Protocol) are both transport layer protocols, but they have important differences:\n\n" +
+                  "TCP:\n" +
+                  "- Connection-oriented (requires a connection to be established before data transfer)\n" +
+                  "- Reliable (guarantees delivery and order of packets)\n" +
+                  "- Slower due to error checking and acknowledgments\n" +
+                  "- Used for applications where accuracy is more important than speed (web browsing, email)\n\n" +
+                  "UDP:\n" +
+                  "- Connectionless (no connection establishment required)\n" +
+                  "- Unreliable (no guarantee of delivery or order)\n" +
+                  "- Faster with less overhead\n" +
+                  "- Used for applications where speed is more important than accuracy (streaming, gaming)";
+              } else {
+                explanation = "Here's a more detailed explanation of the topic.";
+              }
+              break;
+            case 'General HR':
+            case 'HR':
+              if (currentQuestion === "Tell me about yourself.") {
+                explanation = "This is a common opening question in interviews. A good approach is to structure your answer like this:\n\n" +
+                  "1. Brief introduction (name, current role/position)\n" +
+                  "2. Relevant educational background\n" +
+                  "3. Key professional experiences related to the job\n" +
+                  "4. Important skills and strengths\n" +
+                  "5. Personal interests (optional, only if relevant)\n\n" +
+                  "Keep it concise (1-2 minutes), focus on professional aspects, and tailor it to the position you're applying for.";
+              } else {
+                explanation = "Here's guidance on how to approach this question.";
+              }
+              break;
+            default:
+              explanation = "Here's a more detailed explanation of the topic.";
+          }
+          
+          const feedbackContent = `Score: ${evaluation.score}/10\n\n${evaluation.feedback}\n\n${explanation}`;
+          setChatHistory(prev => [
+            ...prev,
+            { role: 'bot', content: feedbackContent }
+          ]);
+        } else {
+          // Regular feedback for good answers
+          const feedbackContent = `Score: ${evaluation.score}/10\n\n${evaluation.feedback}`;
+          setChatHistory(prev => [
+            ...prev,
+            { role: 'bot', content: feedbackContent }
+          ]);
+        }
       }
       
       setQuestionCount(prev => ({ ...prev, attempted: prev.attempted + 1 }))

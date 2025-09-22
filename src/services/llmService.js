@@ -163,6 +163,43 @@ export const evaluateAnswer = async (subject, question, answer) => {
   // In a real implementation, this would call an LLM API with the specified behavior
   // For this mock implementation, we'll provide tailored feedback based on the answer
   
+  // Check for "don't know" type responses
+  const dontKnowResponses = [
+    "don't know",
+    "dont know",
+    "i don't know",
+    "i dont know",
+    "idk",
+    "not sure",
+    "unsure",
+    "i'm not sure",
+    "im not sure",
+    "no idea",
+    "i have no idea",
+    "i am not sure",
+    "i don't have knowledge",
+    "i dont have knowledge",
+    "i don't understand",
+    "i dont understand",
+    "can't answer",
+    "cant answer",
+    "cannot answer",
+    "i can't answer",
+    "i cant answer",
+    "i cannot answer"
+  ];
+  
+  const trimmedAnswer = answer.trim().toLowerCase();
+  const isDontKnowResponse = dontKnowResponses.some(response => trimmedAnswer === response || trimmedAnswer.startsWith(response));
+  
+  if (isDontKnowResponse) {
+    // Don't penalize score for "don't know" responses
+    return {
+      score: 0,
+      feedback: "It's ok, I will explain you the concept clearly:"
+    };
+  }
+  
   // Check if we have a specific response for this question
   if (mockInterviewerResponses[subject] && mockInterviewerResponses[subject][question]) {
     // Simple logic to determine response quality based on answer length
@@ -172,9 +209,15 @@ export const evaluateAnswer = async (subject, question, answer) => {
     if (answerLength > 100) {
       return mockInterviewerResponses[subject][question].excellent;
     } else if (answerLength > 50) {
-      return mockInterviewerResponses[subject][question].good;
+      return {
+        score: mockInterviewerResponses[subject][question].good.score,
+        feedback: "Good attempt, but you missed some details. Here's the complete explanation:"
+      };
     } else if (answerLength > 20) {
-      return mockInterviewerResponses[subject][question].fair;
+      return {
+        score: mockInterviewerResponses[subject][question].fair.score,
+        feedback: "Good attempt, but you missed some details. Here's the complete explanation:"
+      };
     } else {
       return mockInterviewerResponses[subject][question].poor;
     }
@@ -186,16 +229,16 @@ export const evaluateAnswer = async (subject, question, answer) => {
   
   if (answerLength > 100) {
     score = 8;
-    feedback = "Your answer shows good understanding of the topic. You've provided a comprehensive response with relevant details. To improve, consider structuring your answer more clearly and providing specific examples where applicable.";
+    feedback = "Great answer! You've demonstrated a solid understanding of the topic. Keep up the good work!";
   } else if (answerLength > 50) {
     score = 6;
-    feedback = "Your answer covers the basics but could be more detailed. Try to provide more specific information and examples. A stronger answer would demonstrate deeper knowledge of the subject.";
+    feedback = "Good attempt, but you missed some details. Here's the complete explanation:";
   } else if (answerLength > 20) {
     score = 4;
-    feedback = "Your answer is quite brief. While you've touched on the main points, you need to elaborate more. Try to explain concepts in greater detail and show how they relate to practical applications.";
+    feedback = "Good attempt, but you missed some details. Here's the complete explanation:";
   } else {
     score = 2;
-    feedback = "Your answer is too brief to properly evaluate your understanding. Please provide a more comprehensive response that covers key aspects of the question.";
+    feedback = "Your answer is too brief to properly evaluate your understanding. Here's a more comprehensive explanation:";
   }
   
   return {
