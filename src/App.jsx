@@ -4,7 +4,8 @@ import SubjectSelector from './components/SubjectSelector'
 import QuestionArea from './components/QuestionArea'
 import ChatBox from './components/ChatBox'
 import ProgressTracker from './components/ProgressTracker'
-import { getNextQuestion, continueInterview, getExplanation } from './services/llmService.js'
+import { getNextQuestion, continueInterview, evaluateAnswer, getExplanation } from './services/llmService.js'
+import InterviewDemo from './components/InterviewDemo.jsx'
 
 const App = () => {
   const [selectedSubject, setSelectedSubject] = useState(null)
@@ -13,6 +14,7 @@ const App = () => {
   const [questionCount, setQuestionCount] = useState({ attempted: 0, total: 10 })
   const [loading, setLoading] = useState(false)
   const [questionIndex, setQuestionIndex] = useState(0)
+  const [demoMode, setDemoMode] = useState(false)
 
   const handleSubjectSelect = async (subject) => {
     setSelectedSubject(subject)
@@ -23,7 +25,7 @@ const App = () => {
     const firstQuestion = await getNextQuestion(subject, 0)
     setCurrentQuestion(firstQuestion)
     setChatHistory([
-      { role: 'bot', content: `Hello! I'm your ${subject} interviewer.` },
+      { role: 'bot', content: `Hello! I'm your ${subject} interviewer. Let's get started!` },
       { role: 'bot', content: firstQuestion }
     ])
   }
@@ -33,23 +35,30 @@ const App = () => {
     setLoading(true)
 
     try {
-      const { evaluation, nextQuestion } = await continueInterview(selectedSubject, currentQuestion, answer, questionIndex)
+      const { question, evaluation, explanation } = await continueInterview(selectedSubject, currentQuestion, answer, questionIndex)
 
-      // Handle "don't know" answers
-      if (answer.toLowerCase().includes("don't know")) {
-        const explanation = getExplanation(selectedSubject, currentQuestion)
-        const feedbackContent = `It's ok, I will explain you the concept clearly:\n\n${explanation}`
+      // Handle evaluation and explanation
+      if (evaluation) {
+        // For evaluated answers, provide score and feedback
+        const feedbackContent = `Score: ${evaluation.score}/10\n\n${evaluation.feedback}`
         setChatHistory(prev => [...prev, { role: 'bot', content: feedbackContent }])
-      } else if (evaluation) {
-        // For short or incomplete answers, provide detailed explanation
-        const explanation = getExplanation(selectedSubject, currentQuestion)
-        const feedbackContent = `Score: ${evaluation.score}/10\n\n${evaluation.feedback}\n\n${explanation}`
-        setChatHistory(prev => [...prev, { role: 'bot', content: feedbackContent }])
+        
+        // If the answer was short or incomplete, also provide detailed explanation
+        if (evaluation.score < 7 && explanation) {
+          const explanationContent = `Let me provide a more detailed explanation:\n\n${explanation}`
+          setChatHistory(prev => [...prev, { role: 'bot', content: explanationContent }])
+        }
+        
+        // Handle "don't know" answers with score 0
+        if (evaluation.score === 0 && explanation) {
+          const explanationContent = `${evaluation.feedback}\n\n${explanation}`
+          setChatHistory(prev => [...prev, { role: 'bot', content: explanationContent }])
+        }
       }
 
       // Move to next question
-      setCurrentQuestion(nextQuestion)
-      setChatHistory(prev => [...prev, { role: 'bot', content: nextQuestion }])
+      setCurrentQuestion(question)
+      setChatHistory(prev => [...prev, { role: 'bot', content: question }])
       setQuestionIndex(prev => prev + 1)
       setQuestionCount(prev => ({ ...prev, attempted: prev.attempted + 1 }))
 
@@ -89,6 +98,39 @@ const App = () => {
     setQuestionIndex(0)
   }
 
+  // Toggle demo mode
+  const toggleDemoMode = () => {
+    setDemoMode(!demoMode)
+    if (!demoMode) {
+      // Reset session when entering demo mode
+      handleResetSession()
+    }
+  }
+
+  if (demoMode) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex flex-col md:flex-row flex-grow gap-6 p-4">
+          <div className="w-full md:w-1/4">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-xl font-bold mb-4">Demo Mode</h2>
+              <button 
+                onClick={toggleDemoMode}
+                className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Exit Demo Mode
+              </button>
+            </div>
+          </div>
+          <div className="w-full md:w-3/4">
+            <InterviewDemo />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -98,6 +140,15 @@ const App = () => {
             onSelectSubject={handleSubjectSelect} 
             selectedSubject={selectedSubject}
           />
+          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h2 className="text-xl font-bold mb-4">Demo Mode</h2>
+            <button 
+              onClick={toggleDemoMode}
+              className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Enter AI Interview Coach Demo
+            </button>
+          </div>
         </div>
         <div className="w-full md:w-3/4 flex flex-col gap-6">
           <ProgressTracker 
