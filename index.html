@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Q&A Practice Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://framer.com/motion.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0ea5e9', // blue
+                        secondary: '#0d9488', // teal
+                        background: '#f3f4f6' // soft gray
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background min-h-screen flex items-center justify-center p-4">
+    <div id="root" class="w-full max-w-4xl"></div>
+    <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
